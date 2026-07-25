@@ -1,8 +1,8 @@
-"""Gera dados sintéticos do domínio de agendamento de clínica/hospital.
+"""Generate synthetic data for a clinic/hospital scheduling domain.
 
-Simula 11 "tabelas de origem" (pacientes, profissionais, consultas, exames,
-históricos de status e pagamentos particulares) e grava CSVs locais em
-data/raw/<entidade>/. Use --upload para também enviar ao GCS.
+Simulates 11 "source tables" (patients, practitioners, appointments, exams,
+status histories and self-pay payment records) and writes bronze-layer CSVs
+locally under data/raw/. Use --upload to also push them to GCS.
 """
 
 import argparse
@@ -21,308 +21,313 @@ def _seed(seed: int) -> None:
     Faker.seed(seed)
 
 # --------------------------------------------------------------------------
-# Entidades cadastrais / de referência
+# Reference / master data entities
 # --------------------------------------------------------------------------
-def generate_unidades(n: int) -> pd.DataFrame:
+
+def generate_facilities(n: int) -> pd.DataFrame:
     rows = [
         {
-            "unidade_id": i,
-            "nome": f"Unidade {fake.city()}",
-            "endereco": fake.street_address(),
-            "cidade": fake.city(),
-            "uf": fake.estado_sigla(),
-            "telefone": fake.phone_number(),
+            "facility_id": i,
+            "name": f"{fake.city()} Facility",
+            "address": fake.street_address(),
+            "city": fake.city(),
+            "state": fake.estado_sigla(),
+            "phone": fake.phone_number(),
         }
         for i in range(1, n + 1)
     ]
     return pd.DataFrame(rows)
 
-def generate_especialidades() -> pd.DataFrame:
-    rows = [{"especialidade_id": i + 1, "nome": nome} for i, nome in enumerate(domains.ESPECIALIDADES)]
+def generate_specialties() -> pd.DataFrame:
+    rows = [{"specialty_id": i + 1, "name": name} for i, name in enumerate(domains.SPECIALTIES)]
     return pd.DataFrame(rows)
 
-def generate_convenios(n: int) -> pd.DataFrame:
+def generate_insurance_providers(n: int) -> pd.DataFrame:
     rows = [
         {
-            "convenio_id": i,
-            "nome": f"{fake.company()} Saúde",
-            "registro_ans": fake.numerify("######"),
+            "insurance_provider_id": i,
+            "name": f"{fake.company()} Health",
+            "ans_registration_number": fake.numerify("######"),
         }
         for i in range(1, n + 1)
     ]
     return pd.DataFrame(rows)
 
-def generate_tipos_exame() -> pd.DataFrame:
+def generate_exam_types() -> pd.DataFrame:
     rows = [
-        {"exame_tipo_id": i + 1, "nome": nome, "categoria": categoria, "preco_particular": preco}
-        for i, (nome, categoria, preco) in enumerate(domains.TIPOS_EXAME)
+        {"exam_type_id": i + 1, "name": name, "category": category, "self_pay_price": price}
+        for i, (name, category, price) in enumerate(domains.EXAM_TYPES)
     ]
     return pd.DataFrame(rows)
 
-def generate_profissionais(n: int, especialidades: pd.DataFrame, unidades: pd.DataFrame) -> pd.DataFrame:
-    especialidade_ids = especialidades["especialidade_id"].tolist()
-    unidade_ids = unidades["unidade_id"].tolist()
+def generate_practitioners(n: int, specialties: pd.DataFrame, facilities: pd.DataFrame) -> pd.DataFrame:
+    specialty_ids = specialties["specialty_id"].tolist()
+    facility_ids = facilities["facility_id"].tolist()
     rows = [
         {
-            "profissional_id": i,
-            "nome": f"Dr(a). {fake.name()}",
-            "registro_conselho": fake.numerify(f"CRM-{fake.estado_sigla()}-######"),
-            "especialidade_id": random.choice(especialidade_ids),
-            "unidade_id": random.choice(unidade_ids),
-            "telefone": fake.phone_number(),
+            "practitioner_id": i,
+            "name": f"Dr. {fake.name()}",
+            # CRM is Brazil's regional medical council registration number
+            "license_number": fake.numerify(f"CRM-{fake.estado_sigla()}-######"),
+            "specialty_id": random.choice(specialty_ids),
+            "facility_id": random.choice(facility_ids),
+            "phone": fake.phone_number(),
             "email": fake.email(),
         }
         for i in range(1, n + 1)
     ]
     return pd.DataFrame(rows)
 
-def generate_pacientes(n: int) -> pd.DataFrame:
+def generate_patients(n: int) -> pd.DataFrame:
     rows = [
         {
-            "paciente_id": i,
-            "nome": fake.name(),
+            "patient_id": i,
+            "name": fake.name(),
             "cpf": fake.cpf(),
-            "data_nascimento": fake.date_of_birth(minimum_age=0, maximum_age=95).isoformat(),
-            "sexo": random.choice(["F", "M"]),
-            "telefone": fake.phone_number(),
+            "birth_date": fake.date_of_birth(minimum_age=0, maximum_age=95).isoformat(),
+            "sex": random.choice(["F", "M"]),
+            "phone": fake.phone_number(),
             "email": fake.email(),
-            "endereco": fake.street_address(),
-            "cidade": fake.city(),
-            "uf": fake.estado_sigla(),
-            "criado_em": fake.date_time_between(start_date="-3y", end_date="now").isoformat(),
+            "address": fake.street_address(),
+            "city": fake.city(),
+            "state": fake.estado_sigla(),
+            "created_at": fake.date_time_between(start_date="-3y", end_date="now").isoformat(),
         }
         for i in range(1, n + 1)
     ]
     return pd.DataFrame(rows)
 
 # --------------------------------------------------------------------------
-# Simulação de status (consulta e exame compartilham a mesma máquina de estados)
+# Status simulation (appointments and exams share the same state machine)
 # --------------------------------------------------------------------------
-def _build_status_history(data_agendada: datetime, now: datetime):
-    """Retorna (eventos, status_final) plausíveis para uma consulta/exame.
+def _build_status_history(scheduled_at: datetime, now: datetime):
+    """Return a plausible (events, final_status) pair for an appointment/exam.
 
-    Respeita se a data agendada já passou ou ainda vai acontecer em relação
-    a `now`, para não gerar por exemplo um "REALIZADO" no futuro.
+    Respects whether the scheduled date has already passed relative to
+    `now`, so we never generate e.g. a "COMPLETED" event in the future.
     """
     lead_days = random.randint(1, 60)
-    criado_em = data_agendada - timedelta(days=lead_days)
-    if criado_em > now:
-        criado_em = now - timedelta(hours=random.randint(1, 72))
+    created_at = scheduled_at - timedelta(days=lead_days)
+    if created_at > now:
+        created_at = now - timedelta(hours=random.randint(1, 72))
 
-    events = [("AGENDADO", criado_em)]
-    is_future = data_agendada > now
+    events = [("SCHEDULED", created_at)]
+    is_future = scheduled_at > now
 
     if is_future:
         outcome = random.choices(
-            ["AGENDADO", "CONFIRMADO", "CANCELADO", "REAGENDADO"],
+            ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED"],
             weights=[45, 35, 12, 8],
         )[0]
     else:
         outcome = random.choices(
-            ["REALIZADO", "CANCELADO", "FALTOU", "REAGENDADO"],
+            ["COMPLETED", "CANCELLED", "NO_SHOW", "RESCHEDULED"],
             weights=[70, 12, 10, 8],
         )[0]
 
-    if outcome == "AGENDADO":
-        return events, "AGENDADO"
+    if outcome == "SCHEDULED":
+        return events, "SCHEDULED"
 
-    if outcome == "CONFIRMADO":
-        events.append(("CONFIRMADO", criado_em + timedelta(days=random.randint(0, lead_days))))
-        return events, "CONFIRMADO"
+    if outcome == "CONFIRMED":
+        events.append(("CONFIRMED", created_at + timedelta(days=random.randint(0, lead_days))))
+        return events, "CONFIRMED"
 
-    if outcome == "REALIZADO":
-        confirmado_em = criado_em + timedelta(days=random.randint(0, lead_days))
-        events.append(("CONFIRMADO", min(confirmado_em, data_agendada)))
-        events.append(("REALIZADO", data_agendada))
-        return events, "REALIZADO"
+    if outcome == "COMPLETED":
+        confirmed_at = created_at + timedelta(days=random.randint(0, lead_days))
+        events.append(("CONFIRMED", min(confirmed_at, scheduled_at)))
+        events.append(("COMPLETED", scheduled_at))
+        return events, "COMPLETED"
 
-    if outcome == "FALTOU":
-        events.append(("FALTOU", data_agendada))
-        return events, "FALTOU"
+    if outcome == "NO_SHOW":
+        events.append(("NO_SHOW", scheduled_at))
+        return events, "NO_SHOW"
 
-    if outcome == "CANCELADO":
-        cancelado_em = criado_em + timedelta(days=random.randint(0, max(lead_days - 1, 1)))
-        events.append(("CANCELADO", min(cancelado_em, data_agendada)))
-        return events, "CANCELADO"
+    if outcome == "CANCELLED":
+        cancelled_at = created_at + timedelta(days=random.randint(0, max(lead_days - 1, 1)))
+        events.append(("CANCELLED", min(cancelled_at, scheduled_at)))
+        return events, "CANCELLED"
 
-    # REAGENDADO
-    reagendado_em = criado_em + timedelta(days=random.randint(0, max(lead_days - 1, 1)))
-    events.append(("REAGENDADO", min(reagendado_em, data_agendada)))
-    return events, "REAGENDADO"
+    # RESCHEDULED
+    rescheduled_at = created_at + timedelta(days=random.randint(0, max(lead_days - 1, 1)))
+    events.append(("RESCHEDULED", min(rescheduled_at, scheduled_at)))
+    return events, "RESCHEDULED"
 
 # --------------------------------------------------------------------------
-# Consultas e exames
+# Appointments and exams
 # --------------------------------------------------------------------------
-def generate_consultas(n: int, pacientes: pd.DataFrame, profissionais: pd.DataFrame, convenios: pd.DataFrame, now: datetime):
-    pacientes_ids = pacientes["paciente_id"].tolist()
-    profissionais_records = profissionais.to_dict("records")
-    convenios_ids = convenios["convenio_id"].tolist()
+def generate_appointments(n: int, patients: pd.DataFrame, practitioners: pd.DataFrame, insurance_providers: pd.DataFrame, now: datetime):
+    patient_ids = patients["patient_id"].tolist()
+    practitioner_records = practitioners.to_dict("records")
+    insurance_provider_ids = insurance_providers["insurance_provider_id"].tolist()
 
-    consultas_rows = []
+    appointment_rows = []
     status_rows = []
     next_id = [1]
 
-    def _nova_consulta(paciente_id, profissional, data_agendada, tipo_atendimento, convenio_id, origem_id=None):
-        consulta_id = next_id[0]
+    def _new_appointment(patient_id, practitioner, scheduled_at, visit_type, insurance_provider_id, rescheduled_from_id=None):
+        appointment_id = next_id[0]
         next_id[0] += 1
-        events, status_final = _build_status_history(data_agendada, now)
-        consultas_rows.append({
-            "consulta_id": consulta_id,
-            "consulta_origem_id": origem_id,
-            "paciente_id": paciente_id,
-            "profissional_id": profissional["profissional_id"],
-            "especialidade_id": profissional["especialidade_id"],
-            "unidade_id": profissional["unidade_id"],
-            "data_agendada": data_agendada.isoformat(),
-            "tipo_atendimento": tipo_atendimento,
-            "convenio_id": convenio_id,
-            "status_atual": status_final,
-            "criado_em": events[0][1].isoformat(),
+        events, final_status = _build_status_history(scheduled_at, now)
+        appointment_rows.append({
+            "appointment_id": appointment_id,
+            "rescheduled_from_id": rescheduled_from_id,
+            "patient_id": patient_id,
+            "practitioner_id": practitioner["practitioner_id"],
+            "specialty_id": practitioner["specialty_id"],
+            "facility_id": practitioner["facility_id"],
+            "scheduled_at": scheduled_at.isoformat(),
+            "visit_type": visit_type,
+            "insurance_provider_id": insurance_provider_id,
+            "current_status": final_status,
+            "created_at": events[0][1].isoformat(),
         })
         for status, ts in events:
-            status_rows.append({"consulta_id": consulta_id, "status": status, "status_em": ts.isoformat()})
-        return consulta_id, status_final
+            status_rows.append({"appointment_id": appointment_id, "status": status, "status_at": ts.isoformat()})
+        return appointment_id, final_status
 
     for _ in range(n):
-        paciente_id = random.choice(pacientes_ids)
-        profissional = random.choice(profissionais_records)
-        data_agendada = now + timedelta(
+        patient_id = random.choice(patient_ids)
+        practitioner = random.choice(practitioner_records)
+        scheduled_at = now + timedelta(
             days=random.randint(-150, 60),
             hours=random.choice([8, 9, 10, 11, 14, 15, 16, 17]),
         )
-        tipo_atendimento = random.choices(["CONVENIO", "PARTICULAR"], weights=[65, 35])[0]
-        convenio_id = random.choice(convenios_ids) if tipo_atendimento == "CONVENIO" else None
+        visit_type = random.choices(["INSURANCE", "SELF_PAY"], weights=[65, 35])[0]
+        insurance_provider_id = random.choice(insurance_provider_ids) if visit_type == "INSURANCE" else None
 
-        consulta_id, status_final = _nova_consulta(
-            paciente_id, profissional, data_agendada, tipo_atendimento, convenio_id
+        appointment_id, final_status = _new_appointment(
+            patient_id, practitioner, scheduled_at, visit_type, insurance_provider_id
         )
 
-        if status_final == "REAGENDADO":
-            nova_data = data_agendada + timedelta(days=random.randint(3, 21))
-            _nova_consulta(
-                paciente_id, profissional, nova_data, tipo_atendimento, convenio_id, origem_id=consulta_id
+        if final_status == "RESCHEDULED":
+            new_scheduled_at = scheduled_at + timedelta(days=random.randint(3, 21))
+            _new_appointment(
+                patient_id, practitioner, new_scheduled_at, visit_type, insurance_provider_id,
+                rescheduled_from_id=appointment_id,
             )
 
-    return pd.DataFrame(consultas_rows), pd.DataFrame(status_rows)
+    return pd.DataFrame(appointment_rows), pd.DataFrame(status_rows)
 
-def generate_exames(consultas: pd.DataFrame, tipos_exame: pd.DataFrame, now: datetime, taxa: float = 0.4):
-    tipos_exame_ids = tipos_exame["exame_tipo_id"].tolist()
+def generate_exams(appointments: pd.DataFrame, exam_types: pd.DataFrame, now: datetime, rate: float = 0.4):
+    exam_type_ids = exam_types["exam_type_id"].tolist()
     rows = []
     status_rows = []
-    exame_id = 1
+    exam_id = 1
 
-    for _, consulta in consultas.iterrows():
-        if random.random() > taxa:
+    for _, appointment in appointments.iterrows():
+        if random.random() > rate:
             continue
-        data_origem = datetime.fromisoformat(consulta["data_agendada"])
-        data_exame = data_origem + timedelta(days=random.randint(0, 10))
-        events, status_final = _build_status_history(data_exame, now)
+        source_scheduled_at = datetime.fromisoformat(appointment["scheduled_at"])
+        scheduled_at = source_scheduled_at + timedelta(days=random.randint(0, 10))
+        events, final_status = _build_status_history(scheduled_at, now)
 
         rows.append({
-            "exame_id": exame_id,
-            "consulta_origem_id": consulta["consulta_id"],
-            "paciente_id": consulta["paciente_id"],
-            "exame_tipo_id": random.choice(tipos_exame_ids),
-            "unidade_id": consulta["unidade_id"],
-            "data_agendada": data_exame.isoformat(),
-            "tipo_atendimento": consulta["tipo_atendimento"],
-            "convenio_id": consulta["convenio_id"],
-            "status_atual": status_final,
-            "criado_em": events[0][1].isoformat(),
+            "exam_id": exam_id,
+            "source_appointment_id": appointment["appointment_id"],
+            "patient_id": appointment["patient_id"],
+            "exam_type_id": random.choice(exam_type_ids),
+            "facility_id": appointment["facility_id"],
+            "scheduled_at": scheduled_at.isoformat(),
+            "visit_type": appointment["visit_type"],
+            "insurance_provider_id": appointment["insurance_provider_id"],
+            "current_status": final_status,
+            "created_at": events[0][1].isoformat(),
         })
         for status, ts in events:
-            status_rows.append({"exame_id": exame_id, "status": status, "status_em": ts.isoformat()})
-        exame_id += 1
+            status_rows.append({"exam_id": exam_id, "status": status, "status_at": ts.isoformat()})
+        exam_id += 1
 
     return pd.DataFrame(rows), pd.DataFrame(status_rows)
 
 # --------------------------------------------------------------------------
-# Pagamentos (agendamento particular)
+# Payments (self-pay appointments/exams)
 # --------------------------------------------------------------------------
-def generate_pagamentos(consultas: pd.DataFrame, exames: pd.DataFrame, tipos_exame: pd.DataFrame):
-    preco_por_exame = dict(zip(tipos_exame["exame_tipo_id"], tipos_exame["preco_particular"]))
+def generate_payments(appointments: pd.DataFrame, exams: pd.DataFrame, exam_types: pd.DataFrame):
+    price_by_exam_type = dict(zip(exam_types["exam_type_id"], exam_types["self_pay_price"]))
     rows = []
-    pagamento_id = 1
+    payment_id = 1
 
-    def _status_pagamento(status_atual):
-        if status_atual == "CANCELADO":
-            return random.choices(["ESTORNADO", "CANCELADO"], weights=[70, 30])[0]
-        if status_atual == "REALIZADO":
-            return "PAGO"
-        return random.choices(["PENDENTE", "PAGO"], weights=[60, 40])[0]
+    def _payment_status(current_status):
+        if current_status == "CANCELLED":
+            return random.choices(["REFUNDED", "CANCELLED"], weights=[70, 30])[0]
+        if current_status == "COMPLETED":
+            return "PAID"
+        return random.choices(["PENDING", "PAID"], weights=[60, 40])[0]
 
-    def _add(referencia_tipo, referencia_id, status_atual, valor, referencia_data):
-        nonlocal pagamento_id
-        status_pagamento = _status_pagamento(status_atual)
-        data_pagamento = None
-        if status_pagamento in ("PAGO", "ESTORNADO"):
-            data_pagamento = (referencia_data - timedelta(days=random.randint(0, 2))).isoformat()
+    def _add(reference_type, reference_id, current_status, amount, reference_date):
+        nonlocal payment_id
+        payment_status = _payment_status(current_status)
+        paid_at = None
+        if payment_status in ("PAID", "REFUNDED"):
+            paid_at = (reference_date - timedelta(days=random.randint(0, 2))).isoformat()
         rows.append({
-            "pagamento_id": pagamento_id,
-            "referencia_tipo": referencia_tipo,
-            "referencia_id": referencia_id,
-            "valor": valor,
-            "forma_pagamento": random.choice(domains.FORMAS_PAGAMENTO),
-            "status_pagamento": status_pagamento,
-            "data_pagamento": data_pagamento,
+            "payment_id": payment_id,
+            "reference_type": reference_type,
+            "reference_id": reference_id,
+            "amount": amount,
+            "payment_method": random.choice(domains.PAYMENT_METHODS),
+            "payment_status": payment_status,
+            "paid_at": paid_at,
         })
-        pagamento_id += 1
+        payment_id += 1
 
-    for _, c in consultas[consultas["tipo_atendimento"] == "PARTICULAR"].iterrows():
-        valor = round(random.uniform(150, 400), 2)
-        _add("CONSULTA", c["consulta_id"], c["status_atual"], valor, datetime.fromisoformat(c["data_agendada"]))
+    for _, a in appointments[appointments["visit_type"] == "SELF_PAY"].iterrows():
+        amount = round(random.uniform(150, 400), 2)
+        _add("APPOINTMENT", a["appointment_id"], a["current_status"], amount, datetime.fromisoformat(a["scheduled_at"]))
 
-    for _, e in exames[exames["tipo_atendimento"] == "PARTICULAR"].iterrows():
-        base = preco_por_exame.get(e["exame_tipo_id"], 100.0)
-        valor = round(base * random.uniform(0.9, 1.1), 2)
-        _add("EXAME", e["exame_id"], e["status_atual"], valor, datetime.fromisoformat(e["data_agendada"]))
+    for _, e in exams[exams["visit_type"] == "SELF_PAY"].iterrows():
+        base_price = price_by_exam_type.get(e["exam_type_id"], 100.0)
+        amount = round(base_price * random.uniform(0.9, 1.1), 2)
+        _add("EXAM", e["exam_id"], e["current_status"], amount, datetime.fromisoformat(e["scheduled_at"]))
 
     return pd.DataFrame(rows)
 
 # --------------------------------------------------------------------------
-# Orquestração
+# Orchestration
 # --------------------------------------------------------------------------
 def run(cfg, out_dir: Path):
     _seed(cfg.seed)
     now = datetime.now()
 
-    unidades = generate_unidades(cfg.n_unidades)
-    especialidades = generate_especialidades()
-    convenios = generate_convenios(cfg.n_convenios)
-    tipos_exame = generate_tipos_exame()
-    profissionais = generate_profissionais(cfg.n_profissionais, especialidades, unidades)
-    pacientes = generate_pacientes(cfg.n_pacientes)
-    consultas, consulta_status = generate_consultas(cfg.n_consultas, pacientes, profissionais, convenios, now)
-    exames, exame_status = generate_exames(consultas, tipos_exame, now)
-    pagamentos = generate_pagamentos(consultas, exames, tipos_exame)
+    facilities = generate_facilities(cfg.n_facilities)
+    specialties = generate_specialties()
+    insurance_providers = generate_insurance_providers(cfg.n_insurance_providers)
+    exam_types = generate_exam_types()
+    practitioners = generate_practitioners(cfg.n_practitioners, specialties, facilities)
+    patients = generate_patients(cfg.n_patients)
+    appointments, appointment_status_history = generate_appointments(
+        cfg.n_appointments, patients, practitioners, insurance_providers, now
+    )
+    exams, exam_status_history = generate_exams(appointments, exam_types, now)
+    payments = generate_payments(appointments, exams, exam_types)
 
     tables = {
-        "unidades": unidades,
-        "especialidades": especialidades,
-        "convenios": convenios,
-        "tipos_exame": tipos_exame,
-        "profissionais": profissionais,
-        "pacientes": pacientes,
-        "consultas": consultas,
-        "consulta_status_historico": consulta_status,
-        "exames": exames,
-        "exame_status_historico": exame_status,
-        "pagamentos": pagamentos,
+        "facilities": facilities,
+        "specialties": specialties,
+        "insurance_providers": insurance_providers,
+        "exam_types": exam_types,
+        "practitioners": practitioners,
+        "patients": patients,
+        "appointments": appointments,
+        "appointment_status_history": appointment_status_history,
+        "exams": exams,
+        "exam_status_history": exam_status_history,
+        "payments": payments,
     }
 
     extraction_date = now.strftime("%Y-%m-%d")
-    for nome, df in tables.items():
-        entity_dir = out_dir / nome
+    for name, df in tables.items():
+        entity_dir = out_dir / name
         entity_dir.mkdir(parents=True, exist_ok=True)
-        path = entity_dir / f"{nome}_{extraction_date}.csv"
+        path = entity_dir / f"{name}_{extraction_date}.csv"
         df.to_csv(path, index=False)
-        print(f"[ok] {nome}: {len(df)} linhas -> {path}")
+        print(f"[ok] {name}: {len(df)} rows -> {path}")
 
     return tables
 
 def main():
-    parser = argparse.ArgumentParser(description="Gerador de dados sintéticos - clínica/hospital")
-    parser.add_argument("--upload", action="store_true", help="Envia os arquivos gerados ao GCS logo em seguida")
+    parser = argparse.ArgumentParser(description="Synthetic data generator for the clinic/hospital scheduling domain")
+    parser.add_argument("--upload", action="store_true", help="Upload the generated files to GCS right after generating them")
     args = parser.parse_args()
 
     cfg = get_config()

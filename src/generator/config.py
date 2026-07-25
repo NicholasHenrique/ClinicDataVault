@@ -1,4 +1,4 @@
-"""Configuração central do gerador, lida a partir de variáveis de ambiente (.env)."""
+"""Central configuration, read from environment variables (.env)."""
 
 import os
 from dataclasses import dataclass
@@ -13,11 +13,11 @@ class Config:
     raw_prefix: str
     local_output_dir: str
     seed: int
-    n_pacientes: int
-    n_profissionais: int
-    n_unidades: int
-    n_convenios: int
-    n_consultas: int
+    n_patients: int
+    n_practitioners: int
+    n_facilities: int
+    n_insurance_providers: int
+    n_appointments: int
 
 def get_config() -> Config:
     return Config(
@@ -26,9 +26,9 @@ def get_config() -> Config:
         raw_prefix=os.getenv("RAW_PREFIX", "raw"),
         local_output_dir=os.getenv("LOCAL_OUTPUT_DIR", "data/raw"),
         seed=int(os.getenv("SEED", "42")),
-        n_pacientes=int(os.getenv("N_PACIENTES", "300")),
-        n_profissionais=int(os.getenv("N_PROFISSIONAIS", "40")),
-        n_unidades=int(os.getenv("N_UNIDADES", "5")),
-        n_convenios=int(os.getenv("N_CONVENIOS", "15")),
-        n_consultas=int(os.getenv("N_CONSULTAS", "1500")),
+        n_patients=int(os.getenv("N_PATIENTS", "300")),
+        n_practitioners=int(os.getenv("N_PRACTITIONERS", "40")),
+        n_facilities=int(os.getenv("N_FACILITIES", "5")),
+        n_insurance_providers=int(os.getenv("N_INSURANCE_PROVIDERS", "15")),
+        n_appointments=int(os.getenv("N_APPOINTMENTS", "1500")),
     )

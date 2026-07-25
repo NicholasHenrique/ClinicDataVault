@@ -1,45 +1,45 @@
-"""Listas de domínio (referência) usadas pelo gerador de dados sintéticos.
+"""Reference domain lists used by the synthetic data generator.
 
-Estas listas correspondem, na modelagem de Data Vault que vamos construir
-mais adiante, às futuras tabelas `ref_*` (reference tables).
+In the Data Vault model we build later, these lists correspond to the
+future `ref_*` (reference) tables.
 """
 
-ESPECIALIDADES = [
-    "Clínica Geral",
-    "Cardiologia",
-    "Dermatologia",
-    "Ortopedia",
-    "Pediatria",
-    "Ginecologia e Obstetrícia",
-    "Endocrinologia",
-    "Neurologia",
-    "Psiquiatria",
-    "Oftalmologia",
-    "Otorrinolaringologia",
-    "Urologia"
+SPECIALTIES = [
+    "General Practice",
+    "Cardiology",
+    "Dermatology",
+    "Orthopedics",
+    "Pediatrics",
+    "Obstetrics and Gynecology",
+    "Endocrinology",
+    "Neurology",
+    "Psychiatry",
+    "Ophthalmology",
+    "Otolaryngology (ENT)",
+    "Urology",
 ]
 
-# (nome, categoria, preco_particular)
-TIPOS_EXAME = [
-    ("Hemograma Completo", "Laboratorial", 60.0),
-    ("Glicemia em Jejum", "Laboratorial", 35.0),
-    ("Colesterol Total e Frações", "Laboratorial", 55.0),
-    ("Raio-X de Tórax", "Imagem", 120.0),
-    ("Ultrassonografia Abdominal", "Imagem", 180.0),
-    ("Mamografia", "Imagem", 150.0),
-    ("Densitometria Óssea", "Imagem", 140.0),
-    ("Ressonância Magnética", "Imagem", 650.0),
-    ("Tomografia Computadorizada", "Imagem", 480.0),
-    ("Eletrocardiograma", "Cardiológico", 90.0),
-    ("Teste Ergométrico", "Cardiológico", 250.0),
-    ("Endoscopia Digestiva Alta", "Endoscopia", 420.0),
-    ("Colonoscopia", "Endoscopia", 550.0),
+# (name, category, self_pay_price)
+EXAM_TYPES = [
+    ("Complete Blood Count", "Laboratory", 60.0),
+    ("Fasting Blood Glucose", "Laboratory", 35.0),
+    ("Total Cholesterol Panel", "Laboratory", 55.0),
+    ("Chest X-Ray", "Imaging", 120.0),
+    ("Abdominal Ultrasound", "Imaging", 180.0),
+    ("Mammogram", "Imaging", 150.0),
+    ("Bone Densitometry", "Imaging", 140.0),
+    ("MRI Scan", "Imaging", 650.0),
+    ("CT Scan", "Imaging", 480.0),
+    ("Electrocardiogram (ECG)", "Cardiology", 90.0),
+    ("Stress Test", "Cardiology", 250.0),
+    ("Upper Endoscopy", "Endoscopy", 420.0),
+    ("Colonoscopy", "Endoscopy", 550.0),
 ]
 
-STATUS_ATENDIMENTO = ["AGENDADO", "CONFIRMADO", "CANCELADO", "REAGENDADO", "REALIZADO", "FALTOU"]
+APPOINTMENT_STATUSES = ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED", "NO_SHOW"]
 
-TIPOS_ATENDIMENTO = ["PARTICULAR", "CONVENIO"]
+VISIT_TYPES = ["SELF_PAY", "INSURANCE"]
 
-FORMAS_PAGAMENTO = ["DINHEIRO", "CARTAO_CREDITO", "CARTAO_DEBITO", "PIX", "TRANSFERENCIA"]
+PAYMENT_METHODS = ["CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "BANK_TRANSFER"]
 
-STATUS_PAGAMENTO = ["PENDENTE", "PAGO", "ESTORNADO", "CANCELADO"]
+PAYMENT_STATUSES = ["PENDING", "PAID", "REFUNDED", "CANCELLED"]

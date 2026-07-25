@@ -4,10 +4,10 @@ venv/
 __pycache__/
 *.pyc
 
-# Segredos / credenciais (NUNCA versionar)
+# Secrets / credentials (NEVER commit)
 .env
 
-# Dados sintéticos gerados localmente (não versionar, só o gerador)
+# Locally generated synthetic data (only the generator is versioned)
 data/
 
 # dbt

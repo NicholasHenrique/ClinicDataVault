@@ -1,4 +1,4 @@
-"""Envia os arquivos locais de data/raw/ para o bucket GCS, mantendo a estrutura de pastas."""
+"""Upload the local files under data/raw/ to the GCS bucket, preserving the folder layout."""
 
 from pathlib import Path
 from google.cloud import storage
@@ -11,7 +11,7 @@ def upload_directory(local_dir: Path, bucket_name: str, raw_prefix: str) -> None
     local_dir = Path(local_dir)
     files = list(local_dir.rglob("*.csv"))
     if not files:
-        print(f"[aviso] nenhum arquivo .csv encontrado em {local_dir}")
+        print(f"[warning] no .csv files found in {local_dir}")
         return
 
     for file_path in files:
