@@ -1,0 +1,123 @@
+version: 2
+
+models:
+  - name: stg_facilities
+    columns:
+      - name: facility_id
+        tests: [unique, not_null]
+      - name: facility_hk
+        tests: [unique, not_null]
+
+  - name: stg_specialties
+    columns:
+      - name: specialty_id
+        tests: [unique, not_null]
+      - name: specialty_hk
+        tests: [unique, not_null]
+
+  - name: stg_insurance_providers
+    columns:
+      - name: insurance_provider_id
+        tests: [unique, not_null]
+      - name: insurance_provider_hk
+        tests: [unique, not_null]
+
+  - name: stg_exam_types
+    columns:
+      - name: exam_type_id
+        tests: [unique, not_null]
+      - name: exam_type_hk
+        tests: [unique, not_null]
+
+  - name: stg_practitioners
+    columns:
+      - name: practitioner_id
+        tests: [unique, not_null]
+      - name: practitioner_hk
+        tests: [unique, not_null]
+
+  - name: stg_patients
+    columns:
+      - name: patient_id
+        tests: [unique, not_null]
+      - name: patient_hk
+        tests: [unique, not_null]
+      - name: sex
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["F", "M"]
+
+  - name: stg_appointments
+    columns:
+      - name: appointment_id
+        tests: [unique, not_null]
+      - name: appointment_hk
+        tests: [unique, not_null]
+      - name: visit_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["SELF_PAY", "INSURANCE"]
+      - name: current_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED", "NO_SHOW"]
+
+  - name: stg_appointment_status_history
+    columns:
+      - name: appointment_id
+        tests: [not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED", "NO_SHOW"]
+
+  - name: stg_exams
+    columns:
+      - name: exam_id
+        tests: [unique, not_null]
+      - name: exam_hk
+        tests: [unique, not_null]
+      - name: visit_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["SELF_PAY", "INSURANCE"]
+      - name: current_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED", "NO_SHOW"]
+
+  - name: stg_exam_status_history
+    columns:
+      - name: exam_id
+        tests: [not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED", "NO_SHOW"]
+
+  - name: stg_payments
+    columns:
+      - name: payment_id
+        tests: [unique, not_null]
+      - name: reference_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["APPOINTMENT", "EXAM"]
+      - name: payment_method
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["CASH", "CREDIT_CARD", "DEBIT_CARD", "PIX", "BANK_TRANSFER"]
+      - name: payment_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["PENDING", "PAID", "REFUNDED", "CANCELLED"]

@@ -1,0 +1,7 @@
+packages:
+  # Data Vault automation macros (hub/link/satellite) - used starting with the
+  # Raw Vault models. Not yet used by the staging layer in this commit.
+  # If `dbt deps` fails to resolve this version, check the current release on
+  # the dbt Hub (Datavault-UK/automate_dv) and bump the constraint below.
+  - package: Datavault-UK/automate_dv
+    version: [">=0.9.0", "<1.0.0"]

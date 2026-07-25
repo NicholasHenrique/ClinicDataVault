@@ -1,0 +1,22 @@
+name: 'clinic_datavault'
+version: '1.0.0'
+config-version: 2
+
+profile: 'clinic_datavault'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  clinic_datavault:
+    staging:
+      +schema: raw_vault
+      +materialized: table

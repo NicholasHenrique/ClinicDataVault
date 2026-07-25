@@ -2,3 +2,5 @@ faker>=30.0.0
 pandas>=2.2.0
 python-dotenv>=1.0.0
 google-cloud-storage>=2.18.0
+dbt-core>=1.8.0
+dbt-databricks>=1.8.0
