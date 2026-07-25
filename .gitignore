@@ -1,0 +1,26 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Segredos / credenciais (NUNCA versionar)
+.env
+
+# Dados sintéticos gerados localmente (não versionar, só o gerador)
+data/
+
+# dbt
+target/
+dbt_packages/
+logs/
+.dbt/
+
+# Databricks
+.databricks/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
