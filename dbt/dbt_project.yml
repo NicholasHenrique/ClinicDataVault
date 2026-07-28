@@ -30,6 +30,9 @@ models:
       satellites:
         +schema: raw_vault
         +materialized: incremental
+    business_vault:
+      +schema: business_vault
+      +materialized: table
     intermediate:
       +schema: raw_vault
       +materialized: view

@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: pit_appointment
+    description: >
+      Point-in-time snapshot: for every appointment, the status in effect
+      on each of the last 180 days.
+    columns:
+      - name: appointment_hk
+        tests: [not_null]
+      - name: snapshot_date
+        tests: [not_null]
+      - name: status_as_of
+        tests: [not_null]
+
+  - name: bridge_encounter
+    description: >
+      Flattens the appointment core link with its optional insurance, exam
+      and payment links into one row per appointment.
+    columns:
+      - name: appointment_hk
+        tests: [unique, not_null]
