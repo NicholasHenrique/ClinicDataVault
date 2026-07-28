@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests: [unique, not_null]
+
+  - name: dim_patient
+    columns:
+      - name: patient_hk
+        tests: [unique, not_null]
+
+  - name: dim_practitioner
+    columns:
+      - name: practitioner_hk
+        tests: [unique, not_null]
+
+  - name: dim_facility
+    columns:
+      - name: facility_hk
+        tests: [unique, not_null]
+
+  - name: dim_specialty
+    columns:
+      - name: specialty_hk
+        tests: [unique, not_null]
+
+  - name: dim_insurance_provider
+    columns:
+      - name: insurance_provider_hk
+        tests: [unique, not_null]
+
+  - name: dim_exam_type
+    columns:
+      - name: exam_type_hk
+        tests: [unique, not_null]
+
+  - name: fact_appointment
+    columns:
+      - name: appointment_hk
+        tests: [unique, not_null]
+      - name: patient_hk
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_patient')
+                field: patient_hk
+
+  - name: fact_exam
+    columns:
+      - name: exam_hk
+        tests: [unique, not_null]
+
+  - name: fact_payment
+    columns:
+      - name: payment_hk
+        tests: [unique, not_null]

@@ -33,6 +33,9 @@ models:
     business_vault:
       +schema: business_vault
       +materialized: table
+    gold:
+      +schema: gold
+      +materialized: table
     intermediate:
       +schema: raw_vault
       +materialized: view
