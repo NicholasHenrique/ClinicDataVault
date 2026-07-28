@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: lnk_appointment
+    columns:
+      - name: lnk_appointment_hk
+        tests: [unique, not_null]
+
+  - name: lnk_appointment_insurance
+    columns:
+      - name: lnk_appointment_insurance_hk
+        tests: [unique, not_null]
+
+  - name: lnk_appointment_reschedule
+    columns:
+      - name: lnk_appointment_reschedule_hk
+        tests: [unique, not_null]
+
+  - name: lnk_exam
+    columns:
+      - name: lnk_exam_hk
+        tests: [unique, not_null]
+
+  - name: lnk_exam_insurance
+    columns:
+      - name: lnk_exam_insurance_hk
+        tests: [unique, not_null]
+
+  - name: lnk_payment_appointment
+    columns:
+      - name: lnk_payment_hk
+        tests: [unique, not_null]
+
+  - name: lnk_payment_exam
+    columns:
+      - name: lnk_payment_hk
+        tests: [unique, not_null]

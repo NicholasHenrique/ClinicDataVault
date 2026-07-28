@@ -23,6 +23,10 @@ select
     cast(paid_at as timestamp)                                                          as paid_at,
     sha2(upper(trim(cast(payment_id as string))), 256)                                   as payment_hk,
     sha2(upper(trim(concat(reference_type, '-', cast(reference_id as string)))), 256)     as reference_hk,
+    -- link hash key: one payment always references exactly one appointment OR
+    -- one exam (never both), so this single column feeds both filtered links
+    -- below (lnk_payment_appointment / lnk_payment_exam).
+    sha2(upper(trim(concat_ws('-', cast(payment_id as string), reference_type, cast(reference_id as string)))), 256) as lnk_payment_hk,
     current_timestamp()                                                                  as load_date,
     'clinic_generator'                                                                   as record_source
 from source

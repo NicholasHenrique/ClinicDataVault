@@ -24,3 +24,9 @@ models:
       hubs:
         +schema: raw_vault
         +materialized: incremental
+      links:
+        +schema: raw_vault
+        +materialized: incremental
+    intermediate:
+      +schema: raw_vault
+      +materialized: view

@@ -37,6 +37,18 @@ select
     case when insurance_provider_id is null then null
          else sha2(upper(trim(cast(insurance_provider_id as string))), 256)
     end                                                                                      as insurance_provider_hk,
+    -- link hash keys: hashed from business keys, not from the hubs' own hash keys
+    sha2(upper(trim(concat_ws('-',
+        cast(appointment_id as string), cast(patient_id as string),
+        cast(practitioner_id as string), cast(facility_id as string),
+        cast(specialty_id as string)
+    ))), 256)                                                                                as lnk_appointment_hk,
+    case when insurance_provider_id is null then null
+         else sha2(upper(trim(concat_ws('-', cast(appointment_id as string), cast(insurance_provider_id as string)))), 256)
+    end                                                                                      as lnk_appointment_insurance_hk,
+    case when rescheduled_from_id is null then null
+         else sha2(upper(trim(concat_ws('-', cast(appointment_id as string), cast(rescheduled_from_id as string)))), 256)
+    end                                                                                      as lnk_appointment_reschedule_hk,
     current_timestamp()                                                                      as load_date,
     'clinic_generator'                                                                       as record_source
 from source
