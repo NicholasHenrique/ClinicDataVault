@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: hub_patient
+    columns:
+      - name: patient_hk
+        tests: [unique, not_null]
+      - name: patient_id
+        tests: [not_null]
+
+  - name: hub_practitioner
+    columns:
+      - name: practitioner_hk
+        tests: [unique, not_null]
+      - name: practitioner_id
+        tests: [not_null]
+
+  - name: hub_facility
+    columns:
+      - name: facility_hk
+        tests: [unique, not_null]
+      - name: facility_id
+        tests: [not_null]
+
+  - name: hub_specialty
+    columns:
+      - name: specialty_hk
+        tests: [unique, not_null]
+      - name: specialty_id
+        tests: [not_null]
+
+  - name: hub_insurance_provider
+    columns:
+      - name: insurance_provider_hk
+        tests: [unique, not_null]
+      - name: insurance_provider_id
+        tests: [not_null]
+
+  - name: hub_exam_type
+    columns:
+      - name: exam_type_hk
+        tests: [unique, not_null]
+      - name: exam_type_id
+        tests: [not_null]
+
+  - name: hub_appointment
+    columns:
+      - name: appointment_hk
+        tests: [unique, not_null]
+      - name: appointment_id
+        tests: [not_null]
+
+  - name: hub_exam
+    columns:
+      - name: exam_hk
+        tests: [unique, not_null]
+      - name: exam_id
+        tests: [not_null]
+
+  - name: hub_payment
+    columns:
+      - name: payment_hk
+        tests: [unique, not_null]
+      - name: payment_id
+        tests: [not_null]
