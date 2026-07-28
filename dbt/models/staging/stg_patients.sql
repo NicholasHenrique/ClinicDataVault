@@ -23,6 +23,11 @@ select
     state,
     cast(created_at as timestamp)                             as created_at,
     sha2(upper(trim(cast(patient_id as string))), 256)         as patient_hk,
+    sha2(concat_ws('||',
+        coalesce(name, ''), coalesce(cpf, ''), coalesce(cast(birth_date as string), ''),
+        coalesce(sex, ''), coalesce(phone, ''), coalesce(email, ''),
+        coalesce(address, ''), coalesce(city, ''), coalesce(state, '')
+    ), 256)                                                     as hd_patient,
     current_timestamp()                                        as load_date,
     'clinic_generator'                                         as record_source
 from source

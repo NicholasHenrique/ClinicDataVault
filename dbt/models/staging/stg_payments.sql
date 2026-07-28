@@ -27,6 +27,10 @@ select
     -- one exam (never both), so this single column feeds both filtered links
     -- below (lnk_payment_appointment / lnk_payment_exam).
     sha2(upper(trim(concat_ws('-', cast(payment_id as string), reference_type, cast(reference_id as string)))), 256) as lnk_payment_hk,
+    sha2(concat_ws('||',
+        coalesce(cast(amount as string), ''), coalesce(payment_method, ''),
+        coalesce(payment_status, ''), coalesce(cast(paid_at as string), '')
+    ), 256)                                                                               as hd_payment,
     current_timestamp()                                                                  as load_date,
     'clinic_generator'                                                                   as record_source
 from source

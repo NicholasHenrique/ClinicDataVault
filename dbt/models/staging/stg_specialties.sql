@@ -14,6 +14,7 @@ select
     cast(specialty_id as bigint)                                    as specialty_id,
     name,
     sha2(upper(trim(cast(specialty_id as string))), 256)             as specialty_hk,
+    sha2(concat_ws('||', coalesce(name, '')), 256)                    as hd_specialty,
     current_timestamp()                                              as load_date,
     'clinic_generator'                                               as record_source
 from source

@@ -15,6 +15,7 @@ select
     name,
     ans_registration_number,
     sha2(upper(trim(cast(insurance_provider_id as string))), 256)            as insurance_provider_hk,
+    sha2(concat_ws('||', coalesce(name, ''), coalesce(ans_registration_number, '')), 256) as hd_insurance_provider,
     current_timestamp()                                                      as load_date,
     'clinic_generator'                                                       as record_source
 from source

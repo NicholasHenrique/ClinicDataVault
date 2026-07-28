@@ -19,6 +19,10 @@ select
     state,
     phone,
     sha2(upper(trim(cast(facility_id as string))), 256)             as facility_hk,
+    sha2(concat_ws('||',
+        coalesce(name, ''), coalesce(address, ''), coalesce(city, ''),
+        coalesce(state, ''), coalesce(phone, '')
+    ), 256)                                                          as hd_facility,
     current_timestamp()                                             as load_date,
     'clinic_generator'                                              as record_source
 from source

@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: sat_patient
+    columns:
+      - name: patient_hk
+        tests: [not_null]
+
+  - name: sat_practitioner
+    columns:
+      - name: practitioner_hk
+        tests: [not_null]
+
+  - name: sat_facility
+    columns:
+      - name: facility_hk
+        tests: [not_null]
+
+  - name: sat_specialty
+    columns:
+      - name: specialty_hk
+        tests: [not_null]
+
+  - name: sat_insurance_provider
+    columns:
+      - name: insurance_provider_hk
+        tests: [not_null]
+
+  - name: sat_exam_type
+    columns:
+      - name: exam_type_hk
+        tests: [not_null]
+
+  - name: sat_appointment_detail
+    columns:
+      - name: appointment_hk
+        tests: [not_null]
+
+  - name: sat_appointment_status
+    columns:
+      - name: appointment_hk
+        tests: [not_null]
+
+  - name: sat_exam_detail
+    columns:
+      - name: exam_hk
+        tests: [not_null]
+
+  - name: sat_exam_status
+    columns:
+      - name: exam_hk
+        tests: [not_null]
+
+  - name: sat_payment
+    columns:
+      - name: payment_hk
+        tests: [not_null]

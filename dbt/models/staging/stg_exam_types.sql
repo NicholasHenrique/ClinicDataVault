@@ -16,6 +16,9 @@ select
     category,
     cast(self_pay_price as decimal(10, 2))                          as self_pay_price,
     sha2(upper(trim(cast(exam_type_id as string))), 256)             as exam_type_hk,
+    sha2(concat_ws('||',
+        coalesce(name, ''), coalesce(category, ''), coalesce(cast(self_pay_price as string), '')
+    ), 256)                                                           as hd_exam_type,
     current_timestamp()                                              as load_date,
     'clinic_generator'                                               as record_source
 from source

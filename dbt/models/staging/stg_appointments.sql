@@ -49,6 +49,9 @@ select
     case when rescheduled_from_id is null then null
          else sha2(upper(trim(concat_ws('-', cast(appointment_id as string), cast(rescheduled_from_id as string)))), 256)
     end                                                                                      as lnk_appointment_reschedule_hk,
+    sha2(concat_ws('||',
+        coalesce(cast(scheduled_at as string), ''), coalesce(cast(created_at as string), '')
+    ), 256)                                                                                   as hd_appointment_detail,
     current_timestamp()                                                                      as load_date,
     'clinic_generator'                                                                       as record_source
 from source

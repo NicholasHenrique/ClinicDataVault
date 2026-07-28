@@ -15,6 +15,7 @@ select
     status,
     cast(status_at as timestamp)                                                  as status_at,
     sha2(upper(trim(concat('APPOINTMENT-', cast(appointment_id as string)))), 256) as appointment_hk,
+    sha2(concat_ws('||', coalesce(status, '')), 256)                              as hd_appointment_status,
     current_timestamp()                                                           as load_date,
     'clinic_generator'                                                            as record_source
 from source
