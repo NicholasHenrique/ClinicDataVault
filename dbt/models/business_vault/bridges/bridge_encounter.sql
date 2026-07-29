@@ -1,8 +1,8 @@
 -- Bridge table: flattens the appointment's core link plus every optional
--- link that may hang off it (insurance, the exam it generated, and the
--- payment for either) into a single row. Exists purely for query
--- performance: without it, a report needs to join 5 link tables to answer
--- "what was billed for this appointment".
+-- link that may hang off it (insurance, the exam it generated, the
+-- payment for either, and any satisfaction feedback) into a single row.
+-- Exists purely for query performance: without it, a report needs to join
+-- 6 link tables to answer "what happened around this appointment".
 {{ config(materialized='table') }}
 
 with appointment as (
@@ -36,6 +36,11 @@ exam_payment as (
     select e.source_appointment_hk as appointment_hk, e.exam_hk, p.payment_hk
     from {{ ref('lnk_payment_exam') }} p
     inner join exam e on e.exam_hk = p.reference_hk
+),
+
+feedback as (
+    select appointment_hk, feedback_hk
+    from {{ ref('lnk_feedback') }}
 )
 
 select
@@ -48,7 +53,8 @@ select
     ex.exam_hk,
     ex.exam_type_hk,
     ap.payment_hk as appointment_payment_hk,
-    exp.payment_hk as exam_payment_hk
+    exp.payment_hk as exam_payment_hk,
+    fb.feedback_hk
 from appointment a
 left join appointment_insurance ai on ai.appointment_hk = a.appointment_hk
 left join exam ex on ex.source_appointment_hk = a.appointment_hk
@@ -56,3 +62,4 @@ left join appointment_payment ap on ap.appointment_hk = a.appointment_hk
 left join exam_payment exp
     on exp.appointment_hk = a.appointment_hk
    and exp.exam_hk = ex.exam_hk
+left join feedback fb on fb.appointment_hk = a.appointment_hk
