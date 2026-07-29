@@ -5,21 +5,21 @@ models:
     columns:
       - name: patient_hk
         tests: [unique, not_null]
-      - name: patient_id
+      - name: cpf
         tests: [not_null]
 
   - name: hub_practitioner
     columns:
       - name: practitioner_hk
         tests: [unique, not_null]
-      - name: practitioner_id
+      - name: license_number
         tests: [not_null]
 
   - name: hub_facility
     columns:
       - name: facility_hk
         tests: [unique, not_null]
-      - name: facility_id
+      - name: cnes_code
         tests: [not_null]
 
   - name: hub_specialty
@@ -33,14 +33,14 @@ models:
     columns:
       - name: insurance_provider_hk
         tests: [unique, not_null]
-      - name: insurance_provider_id
+      - name: ans_registration_number
         tests: [not_null]
 
   - name: hub_exam_type
     columns:
       - name: exam_type_hk
         tests: [unique, not_null]
-      - name: exam_type_id
+      - name: tuss_code
         tests: [not_null]
 
   - name: hub_appointment
@@ -62,4 +62,11 @@ models:
       - name: payment_hk
         tests: [unique, not_null]
       - name: payment_id
+        tests: [not_null]
+
+  - name: hub_feedback
+    columns:
+      - name: feedback_hk
+        tests: [unique, not_null]
+      - name: feedback_id
         tests: [not_null]

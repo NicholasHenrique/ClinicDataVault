@@ -55,3 +55,8 @@ models:
     columns:
       - name: payment_hk
         tests: [not_null]
+
+  - name: sat_feedback
+    columns:
+      - name: feedback_hk
+        tests: [not_null]

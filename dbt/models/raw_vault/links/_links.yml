@@ -35,3 +35,8 @@ models:
     columns:
       - name: lnk_payment_hk
         tests: [unique, not_null]
+
+  - name: lnk_feedback
+    columns:
+      - name: lnk_feedback_hk
+        tests: [unique, not_null]
