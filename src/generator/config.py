@@ -18,6 +18,9 @@ class Config:
     n_facilities: int
     n_insurance_providers: int
     n_appointments: int
+    n_partner_patients_new: int
+    partner_overlap_rate: float
+    feedback_rate: float
 
 def get_config() -> Config:
     return Config(
@@ -31,4 +34,7 @@ def get_config() -> Config:
         n_facilities=int(os.getenv("N_FACILITIES", "5")),
         n_insurance_providers=int(os.getenv("N_INSURANCE_PROVIDERS", "15")),
         n_appointments=int(os.getenv("N_APPOINTMENTS", "1500")),
+        n_partner_patients_new=int(os.getenv("N_PARTNER_PATIENTS_NEW", "40")),
+        partner_overlap_rate=float(os.getenv("PARTNER_OVERLAP_RATE", "0.6")),
+        feedback_rate=float(os.getenv("FEEDBACK_RATE", "0.3"))
     )
