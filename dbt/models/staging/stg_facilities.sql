@@ -13,12 +13,16 @@ with source as (
 
 select
     cast(facility_id as bigint)                                    as facility_id,
+    cnes_code,
     name,
     address,
     city,
     state,
     phone,
-    sha2(upper(trim(cast(facility_id as string))), 256)             as facility_hk,
+    -- business key is CNES (Brazil's national healthcare facility
+    -- registry code), not the internal facility_id or the name (names
+    -- can repeat across clinics or change on a rebrand).
+    sha2(upper(trim(cnes_code)), 256)                                as facility_hk,
     sha2(concat_ws('||',
         coalesce(name, ''), coalesce(address, ''), coalesce(city, ''),
         coalesce(state, ''), coalesce(phone, '')

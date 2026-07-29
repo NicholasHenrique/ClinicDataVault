@@ -102,6 +102,25 @@ models:
               arguments:
                 values: ["SCHEDULED", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED", "NO_SHOW"]
 
+  - name: stg_partner_patients
+    columns:
+      - name: partner_patient_id
+        tests: [unique, not_null]
+      - name: patient_hk
+        tests: [unique, not_null]
+
+  - name: stg_patient_feedback
+    columns:
+      - name: feedback_id
+        tests: [unique, not_null]
+      - name: feedback_hk
+        tests: [unique, not_null]
+      - name: rating
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+
   - name: stg_payments
     columns:
       - name: payment_id

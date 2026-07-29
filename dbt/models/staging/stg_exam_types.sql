@@ -15,7 +15,10 @@ select
     name,
     category,
     cast(self_pay_price as decimal(10, 2))                          as self_pay_price,
-    sha2(upper(trim(cast(exam_type_id as string))), 256)             as exam_type_hk,
+    tuss_code,
+    -- business key is the TUSS code (the standard procedure code Brazilian
+    -- insurers/clinics bill against), not the internal exam_type_id.
+    sha2(upper(trim(tuss_code)), 256)                                as exam_type_hk,
     sha2(concat_ws('||',
         coalesce(name, ''), coalesce(category, ''), coalesce(cast(self_pay_price as string), '')
     ), 256)                                                           as hd_exam_type,

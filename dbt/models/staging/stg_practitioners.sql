@@ -18,9 +18,10 @@ select
     cast(facility_id as bigint)                                         as facility_id,
     phone,
     email,
-    sha2(upper(trim(cast(practitioner_id as string))), 256)              as practitioner_hk,
-    sha2(upper(trim(cast(specialty_id as string))), 256)                 as specialty_hk,
-    sha2(upper(trim(cast(facility_id as string))), 256)                  as facility_hk,
+    -- business key is the CRM license number (Brazil's regional medical
+    -- council registration), not the internal practitioner_id: it's the
+    -- real, portable identifier for this professional across any system.
+    sha2(upper(trim(license_number)), 256)                                as practitioner_hk,
     sha2(concat_ws('||',
         coalesce(name, ''), coalesce(license_number, ''),
         coalesce(cast(specialty_id as string), ''), coalesce(cast(facility_id as string), ''),
