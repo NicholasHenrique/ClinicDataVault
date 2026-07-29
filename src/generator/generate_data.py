@@ -7,6 +7,7 @@ locally under data/raw/. Use --upload to also push them to GCS.
 
 import argparse
 import random
+import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
@@ -378,6 +379,13 @@ def generate_patient_feedback(appointments: pd.DataFrame, patients: pd.DataFrame
 def run(cfg, out_dir: Path):
     _seed(cfg.seed)
     now = datetime.now()
+
+    # File names include today's date, so without this a new run just adds
+    # another dated CSV alongside old ones from earlier days — --upload then
+    # pushes every generation ever produced, and read_files('*.csv') in
+    # staging unions them all, silently duplicating every entity.
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
 
     facilities = generate_facilities(cfg.n_facilities)
     specialties = generate_specialties()
