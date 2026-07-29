@@ -1,7 +1,7 @@
 -- Grain: one row per appointment. current_status comes from pit_appointment
 -- (today's snapshot) so the mart reflects the Business Vault's resolved
--- as-of status rather than re-deriving it here; exam/payment linkage comes
--- from bridge_encounter instead of re-joining the raw links.
+-- as-of status rather than re-deriving it here; exam/payment/feedback
+-- linkage comes from bridge_encounter instead of re-joining the raw links.
 {{ config(materialized='table') }}
 
 with today_status as (
@@ -11,13 +11,18 @@ with today_status as (
 ),
 
 bridge as (
-    select appointment_hk, exam_hk, exam_type_hk, appointment_payment_hk
+    select appointment_hk, exam_hk, exam_type_hk, appointment_payment_hk, feedback_hk
     from {{ ref('bridge_encounter') }}
 ),
 
 payment as (
     select payment_hk, amount, payment_method, payment_status
     from {{ ref('stg_payments') }}
+),
+
+feedback as (
+    select feedback_hk, rating
+    from {{ ref('stg_patient_feedback') }}
 )
 
 select
@@ -30,15 +35,19 @@ select
     a.insurance_provider_hk,
     b.exam_hk,
     b.exam_type_hk,
+    b.feedback_hk,
     cast(date_format(a.scheduled_at, 'yyyyMMdd') as int) as scheduled_date_key,
     a.visit_type,
     coalesce(ts.status_as_of, a.current_status)          as current_status,
     p.amount                                              as amount_paid,
     p.payment_method,
     p.payment_status,
+    f.rating                                              as feedback_rating,
     b.exam_hk is not null                                 as has_exam,
+    b.feedback_hk is not null                             as has_feedback,
     1                                                      as appointment_count
 from {{ ref('stg_appointments') }} a
 left join today_status ts on ts.appointment_hk = a.appointment_hk
 left join bridge b on b.appointment_hk = a.appointment_hk
 left join payment p on p.payment_hk = b.appointment_payment_hk
+left join feedback f on f.feedback_hk = b.feedback_hk

@@ -56,3 +56,13 @@ models:
     columns:
       - name: payment_hk
         tests: [unique, not_null]
+
+  - name: fact_feedback
+    columns:
+      - name: feedback_hk
+        tests: [unique, not_null]
+      - name: rating
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
